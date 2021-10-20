@@ -1,8 +1,9 @@
 # Set Up and Configure a Cloud Environment in Google Cloud: Challenge Lab
 
-
 ## Quick setup
+
 - Set default `zone` and `region`
+
   ```bash
   gcloud config set compute/region us-east1
   gcloud config set compute/zone us-east1-b
@@ -11,6 +12,7 @@
 ## Task 1: Create development VPC manually
 
 Create a VPC called `griffin-dev-vpc` with the following subnets only:
+
 - name: `griffin-dev-wp`
   ip range: `192.168.16.0/20`
 - name: `griffin-dev-mgmt`
@@ -24,7 +26,9 @@ gcloud compute networks subnets create griffin-dev-mgmt --network griffin-dev-vp
 ```
 
 ## Task 2: Create production VPC manually
+
 Create a VPC called `griffin-prod-vpc` with the following subnets only:
+
 - name: `griffin-prod-wp`
   ip range: `192.168.48.0/20`
 - name: `griffin-prod-mgmt`
@@ -47,33 +51,41 @@ gcloud compute firewall-rules create allow-ssh-prod --network=griffin-prod-vpc -
 ```
 
 ## Task 4: Create and configure Cloud SQL Instance
+
 Create a sql instance with named `griffin-dev-db`...
+
 ```bash
 gcloud sql instances create griffin-dev-db --database-version=MYSQL_5_7 --root-password=password
 ```
+
 ```bash
 gcloud sql connect griffin-dev-db
 ```
+
 ```bash
 CREATE DATABASE wordpress;
 GRANT ALL PRIVILEGES ON wordpress.* TO "wp_user"@"%" IDENTIFIED BY "stormwind_rules";
 FLUSH PRIVILEGES;
 ```
 
-
 ## Task 5: Create Kubernetes cluster
+
 ```bash
 gcloud container clusters create griffin-dev --subnetwork griffin-dev-wp --network griffin-dev-vpc --num-nodes 2
 gcloud container clusters get-credentials griffin-dev
 ```
 
 ## Task 6: Prepare the Kubernetes cluster
+
 - Copy sample files from bucket
+
   ```bash
   gsutil cp -r gs://cloud-training/gsp321/wp-k8s .
   cd wp-k8s
   ```
+
 - Create secret keys, for access to the database. First edit `wp-env.yaml`, and replace username and password with `wp_user` and `stormwind_rules`. Now create environment secret using below commands
+
   ```bash
   kubectl create -f wp-env.yaml
   gcloud iam service-accounts keys create key.json \
@@ -85,12 +97,15 @@ gcloud container clusters get-credentials griffin-dev
 ## Task 7: Create a WordPress deployment
 
 - Use below command to print out sql instance details
+
   ```bash
   gcloud sql instances describe griffin-dev-db
   ```
+
   copy down the instance `connectionName`.
 - In `wp-deployments.yaml`, replace `YOUR_SQL_INSTANCE` with _connectionName_ copied above
 - Create deployment and service
+
   ```bash
   kubectl create -f wp-deployment.yaml
   kubectl create -f wp-service.yaml
@@ -100,10 +115,13 @@ gcloud container clusters get-credentials griffin-dev
 
 From Navigation Menu navigate to *Monitoring -> Uptime Checks*
 Click on _Create uptime check_
+
 - Get IP address of `wordpress-dev` service
+
   ```bash
   kubectl get services
   ```
+
 - Give a title - `wp-uptime-check`
 - In Target, enter `external ip` of wp-dev Loadbalancer as `hostname`. and `/` in path.
 - Click `test` to test the connection, and create the uptime check
